@@ -9,7 +9,9 @@ declare global {
 
 function getDb(): Database.Database {
   if (!global._db) {
-    const dbPath = path.join(process.cwd(), 'data', 'poll.db')
+    const dbPath = process.env.NODE_ENV === 'production'
+      ? '/tmp/poll.db'
+      : path.join(process.cwd(), 'data', 'poll.db')
     const db = new Database(dbPath)
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
