@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+
+# database
+data/poll.db
+data/poll.db-shm
+data/poll.db-wal
+
+# misc
+.DS_Store
+*.pem
+.env*.local
+
+# debug
+npm-debug.log*
