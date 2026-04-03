@@ -153,7 +153,6 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
           {/* Calendar */}
           <CalendarGrid
             availability={pollData.availability}
-            totalParticipants={pollData.participants.length}
             myDates={myDates}
             onToggle={handleToggle}
           />

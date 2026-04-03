@@ -4,22 +4,21 @@ interface DateCellProps {
   date: string
   day: number
   count: number
-  totalParticipants: number
+  minCount: number
+  maxCount: number
   isMyDate: boolean
   isPast: boolean
   onToggle: () => void
 }
 
-function getColor(count: number, total: number): { bg: string; text: string } | null {
-  if (total === 0 || count === 0) return null
-  const pct = count / total                      // 0..1
+function getColor(count: number, min: number, max: number): { bg: string; text: string } | null {
+  if (count === 0) return null
+  // When all dates have the same count, show green (best available)
+  const pct = max === min ? 1 : (count - min) / (max - min)
   const hue = Math.round(pct * 120)              // 0=red, 60=yellow, 120=green
-  // Lightness: keep it mid-range so the hue reads clearly
-  const lightness = 62
-  // Use dark text in the yellow middle band, white on red and green ends
   const textDark = pct > 0.25 && pct < 0.75
   return {
-    bg: `hsl(${hue}, 72%, ${lightness}%)`,
+    bg: `hsl(${hue}, 72%, 62%)`,
     text: textDark ? '#1f2937' : '#ffffff',
   }
 }
@@ -27,12 +26,13 @@ function getColor(count: number, total: number): { bg: string; text: string } | 
 export default function DateCell({
   day,
   count,
-  totalParticipants,
+  minCount,
+  maxCount,
   isMyDate,
   isPast,
   onToggle,
 }: DateCellProps) {
-  const color = getColor(count, totalParticipants)
+  const color = getColor(count, minCount, maxCount)
 
   return (
     <button
