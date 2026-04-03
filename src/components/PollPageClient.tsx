@@ -77,10 +77,16 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         )
         if (!res.ok) throw new Error('Toggle failed')
         const updated: PollData = await res.json()
-        setPollData(updated)
-        // Reconcile myDates from server response
-        const serverDates = updated.participantAvailability[participantId] ?? []
-        setMyDates(new Set(serverDates))
+        // Only patch this date's aggregate count — don't replace all state,
+        // which would clobber other in-flight optimistic updates.
+        setPollData((prev) => ({
+          ...prev,
+          availability: {
+            ...prev.availability,
+            [date]: updated.availability[date] ?? 0,
+          },
+          participants: updated.participants,
+        }))
       } catch {
         // Revert on error
         setMyDates((prev) => {
