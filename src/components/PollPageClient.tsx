@@ -45,10 +45,9 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   )
 
   const handleToggle = useCallback(
-    async (date: string) => {
+    (date: string) => {
       if (!participantId) return
 
-      // Optimistic update
       const wasSelected = myDates.has(date)
       setMyDates((prev) => {
         const next = new Set(prev)
@@ -59,36 +58,16 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         const newCount = (prev.availability[date] ?? 0) + (wasSelected ? -1 : 1)
         return {
           ...prev,
-          availability: {
-            ...prev.availability,
-            [date]: Math.max(0, newCount),
-          },
+          availability: { ...prev.availability, [date]: Math.max(0, newCount) },
         }
       })
 
-      try {
-        const res = await fetch(
-          `/api/polls/${pollId}/participants/${participantId}/availability`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date }),
-          }
-        )
-        if (!res.ok) throw new Error('Toggle failed')
-        const updated: PollData = await res.json()
-        // Only patch this date's aggregate count — don't replace all state,
-        // which would clobber other in-flight optimistic updates.
-        setPollData((prev) => ({
-          ...prev,
-          availability: {
-            ...prev.availability,
-            [date]: updated.availability[date] ?? 0,
-          },
-          participants: updated.participants,
-        }))
-      } catch {
-        // Revert on error
+      fetch(`/api/polls/${pollId}/participants/${participantId}/availability`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date }),
+      }).catch(() => {
+        // Revert on failure
         setMyDates((prev) => {
           const next = new Set(prev)
           wasSelected ? next.add(date) : next.delete(date)
@@ -98,13 +77,10 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
           const newCount = (prev.availability[date] ?? 0) + (wasSelected ? 1 : -1)
           return {
             ...prev,
-            availability: {
-              ...prev.availability,
-              [date]: Math.max(0, newCount),
-            },
+            availability: { ...prev.availability, [date]: Math.max(0, newCount) },
           }
         })
-      }
+      })
     },
     [participantId, pollId, myDates]
   )
