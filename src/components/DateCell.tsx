@@ -46,22 +46,12 @@ export default function DateCell({
           : !color
           ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer'
           : 'cursor-pointer hover:brightness-110',
-        isMyDate && !isPast ? 'ring-2 ring-white ring-offset-1' : '',
+        isMyDate && !isPast ? 'ring-3 ring-indigo-500' : '',
       ]
         .filter(Boolean)
         .join(' ')}
       style={color && !isPast ? { backgroundColor: color.bg } : undefined}
     >
-      {/* checkmark for own selection */}
-      {isMyDate && !isPast && (
-        <span
-          className="absolute top-0.5 right-1 text-xs leading-none font-bold"
-          style={{ color: color ? color.text : '#6366f1' }}
-        >
-          ✓
-        </span>
-      )}
-
       {/* day number */}
       <span
         className="font-semibold leading-none"

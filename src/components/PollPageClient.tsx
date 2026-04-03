@@ -177,7 +177,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               <span>All available</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-gray-700">✓</span>
+              <div className="w-4 h-4 rounded bg-gray-100 ring-3 ring-indigo-500" />
               <span>You&apos;re available</span>
             </div>
           </div>
