@@ -46,7 +46,7 @@ export default function DateCell({
           : !color
           ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer'
           : 'cursor-pointer hover:brightness-110',
-        isMyDate && !isPast ? 'ring-3 ring-indigo-500' : '',
+        isMyDate && !isPast ? 'ring-4 ring-indigo-500' : '',
       ]
         .filter(Boolean)
         .join(' ')}
