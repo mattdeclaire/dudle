@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getPollWithAvailability } from '@/lib/db'
+import { getPollWithAvailability, initSchema } from '@/lib/db'
 import PollPageClient from '@/components/PollPageClient'
 
 interface Props {
@@ -7,8 +7,9 @@ interface Props {
 }
 
 export default async function PollPage({ params }: Props) {
+  await initSchema()
   const { id } = await params
-  const data = getPollWithAvailability(id)
+  const data = await getPollWithAvailability(id)
   if (!data) notFound()
 
   return (

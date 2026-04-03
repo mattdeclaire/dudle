@@ -1,93 +1,64 @@
-import Database from 'better-sqlite3'
-import path from 'path'
+import { sql } from '@vercel/postgres'
 import type { PollData, Poll, Participant } from './types'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var _db: Database.Database | undefined
-}
-
-function getDb(): Database.Database {
-  if (!global._db) {
-    const dbPath = process.env.NODE_ENV === 'production'
-      ? '/tmp/poll.db'
-      : path.join(process.cwd(), 'data', 'poll.db')
-    const db = new Database(dbPath)
-    db.pragma('journal_mode = WAL')
-    db.pragma('foreign_keys = ON')
-    initSchema(db)
-    global._db = db
-  }
-  return global._db
-}
-
-function initSchema(db: Database.Database) {
-  db.exec(`
+export async function initSchema() {
+  await sql`
     CREATE TABLE IF NOT EXISTS polls (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+  await sql`
     CREATE TABLE IF NOT EXISTS participants (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      poll_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      FOREIGN KEY (poll_id) REFERENCES polls(id)
-    );
-
+      id SERIAL PRIMARY KEY,
+      poll_id TEXT NOT NULL REFERENCES polls(id),
+      name TEXT NOT NULL
+    )
+  `
+  await sql`
     CREATE TABLE IF NOT EXISTS availability (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      participant_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      participant_id INTEGER NOT NULL REFERENCES participants(id),
       date TEXT NOT NULL,
-      UNIQUE(participant_id, date),
-      FOREIGN KEY (participant_id) REFERENCES participants(id)
-    );
-  `)
+      UNIQUE(participant_id, date)
+    )
+  `
 }
 
-export function createPollWithOwner(
+export async function createPollWithOwner(
   id: string,
   title: string,
   ownerName: string
-): { pollId: string; participantId: number } {
-  const db = getDb()
-  const run = db.transaction(() => {
-    db.prepare('INSERT INTO polls (id, title) VALUES (?, ?)').run(id, title)
-    const result = db
-      .prepare('INSERT INTO participants (poll_id, name) VALUES (?, ?)')
-      .run(id, ownerName)
-    return result.lastInsertRowid as number
-  })
-  const participantId = run()
-  return { pollId: id, participantId }
+): Promise<{ pollId: string; participantId: number }> {
+  await sql`INSERT INTO polls (id, title) VALUES (${id}, ${title})`
+  const result = await sql<{ id: number }>`
+    INSERT INTO participants (poll_id, name) VALUES (${id}, ${ownerName}) RETURNING id
+  `
+  return { pollId: id, participantId: result.rows[0].id }
 }
 
-export function getPollWithAvailability(id: string): PollData | null {
-  const db = getDb()
+export async function getPollWithAvailability(id: string): Promise<PollData | null> {
+  const pollResult = await sql<Poll>`SELECT * FROM polls WHERE id = ${id}`
+  if (pollResult.rows.length === 0) return null
+  const poll = pollResult.rows[0]
 
-  const poll = db
-    .prepare('SELECT * FROM polls WHERE id = ?')
-    .get(id) as Poll | undefined
-  if (!poll) return null
+  const participantsResult = await sql<Participant>`
+    SELECT * FROM participants WHERE poll_id = ${id}
+  `
+  const participants = participantsResult.rows
 
-  const participants = db
-    .prepare('SELECT * FROM participants WHERE poll_id = ?')
-    .all(id) as Participant[]
-
-  const rows = db
-    .prepare(
-      `SELECT a.participant_id, a.date
-       FROM availability a
-       JOIN participants p ON a.participant_id = p.id
-       WHERE p.poll_id = ?`
-    )
-    .all(id) as { participant_id: number; date: string }[]
+  const rowsResult = await sql<{ participant_id: number; date: string }>`
+    SELECT a.participant_id, a.date
+    FROM availability a
+    JOIN participants p ON a.participant_id = p.id
+    WHERE p.poll_id = ${id}
+  `
 
   const availability: Record<string, number> = {}
   const participantAvailability: Record<number, string[]> = {}
 
-  for (const row of rows) {
+  for (const row of rowsResult.rows) {
     availability[row.date] = (availability[row.date] ?? 0) + 1
     if (!participantAvailability[row.participant_id]) {
       participantAvailability[row.participant_id] = []
@@ -98,47 +69,33 @@ export function getPollWithAvailability(id: string): PollData | null {
   return { poll, participants, availability, participantAvailability }
 }
 
-export function upsertParticipant(
+export async function upsertParticipant(
   pollId: string,
   name: string
-): Participant {
-  const db = getDb()
-  const existing = db
-    .prepare(
-      'SELECT * FROM participants WHERE poll_id = ? AND LOWER(name) = LOWER(?)'
-    )
-    .get(pollId, name) as Participant | undefined
+): Promise<Participant> {
+  const existing = await sql<Participant>`
+    SELECT * FROM participants
+    WHERE poll_id = ${pollId} AND LOWER(name) = LOWER(${name})
+    LIMIT 1
+  `
+  if (existing.rows.length > 0) return existing.rows[0]
 
-  if (existing) return existing
-
-  const result = db
-    .prepare('INSERT INTO participants (poll_id, name) VALUES (?, ?)')
-    .run(pollId, name)
-  return {
-    id: result.lastInsertRowid as number,
-    poll_id: pollId,
-    name,
-  }
+  const result = await sql<Participant>`
+    INSERT INTO participants (poll_id, name) VALUES (${pollId}, ${name}) RETURNING *
+  `
+  return result.rows[0]
 }
 
-export function toggleAvailability(
+export async function toggleAvailability(
   participantId: number,
   date: string
-): void {
-  const db = getDb()
-  const existing = db
-    .prepare(
-      'SELECT id FROM availability WHERE participant_id = ? AND date = ?'
-    )
-    .get(participantId, date)
-
-  if (existing) {
-    db.prepare(
-      'DELETE FROM availability WHERE participant_id = ? AND date = ?'
-    ).run(participantId, date)
+): Promise<void> {
+  const existing = await sql`
+    SELECT id FROM availability WHERE participant_id = ${participantId} AND date = ${date}
+  `
+  if (existing.rows.length > 0) {
+    await sql`DELETE FROM availability WHERE participant_id = ${participantId} AND date = ${date}`
   } else {
-    db.prepare(
-      'INSERT INTO availability (participant_id, date) VALUES (?, ?)'
-    ).run(participantId, date)
+    await sql`INSERT INTO availability (participant_id, date) VALUES (${participantId}, ${date})`
   }
 }

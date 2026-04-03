@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
-import { createPollWithOwner } from '@/lib/db'
+import { createPollWithOwner, initSchema } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  await initSchema()
   const id = uuidv4()
-  const { pollId, participantId } = createPollWithOwner(
+  const { pollId, participantId } = await createPollWithOwner(
     id,
     title.trim(),
     ownerName.trim()

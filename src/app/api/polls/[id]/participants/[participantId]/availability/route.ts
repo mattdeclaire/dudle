@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPollWithAvailability, toggleAvailability } from '@/lib/db'
+import { getPollWithAvailability, toggleAvailability, initSchema } from '@/lib/db'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
+  await initSchema()
   const { id, participantId: participantIdStr } = await params
-  const pollData = getPollWithAvailability(id)
+  const pollData = await getPollWithAvailability(id)
   if (!pollData) {
     return NextResponse.json({ error: 'Poll not found' }, { status: 404 })
   }
@@ -20,14 +21,10 @@ export async function PATCH(
   const body = await request.json()
   const { date } = body
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json(
-      { error: 'date must be YYYY-MM-DD' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'date must be YYYY-MM-DD' }, { status: 400 })
   }
 
-  toggleAvailability(participantId, date)
-
-  const updated = getPollWithAvailability(id)
+  await toggleAvailability(participantId, date)
+  const updated = await getPollWithAvailability(id)
   return NextResponse.json(updated)
 }
