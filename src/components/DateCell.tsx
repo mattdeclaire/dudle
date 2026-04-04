@@ -51,7 +51,7 @@ export default function DateCell({
         .join(' ')}
       style={{
         ...(color && !isPast ? { backgroundColor: color.bg } : {}),
-        ...(isMyDate && !isPast ? { '--tw-ring-color': 'hsl(120,55%,32%)' } as React.CSSProperties : {}),
+        ...(isMyDate && !isPast ? { '--tw-ring-color': 'hsl(45,90%,45%)' } as React.CSSProperties : {}),
       }}
     >
       {/* day number */}
