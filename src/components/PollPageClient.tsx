@@ -164,16 +164,16 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               <span>No one</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0,70%,65%)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,20%,73%)' }} />
               <span>Few available</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(60,70%,65%)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,46%,67%)' }} />
               <span>Some available</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,70%,65%)' }} />
-              <span>All available</span>
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,72%,60%)' }} />
+              <span>Most available</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-4 rounded bg-gray-100 ring-4 ring-indigo-500" />

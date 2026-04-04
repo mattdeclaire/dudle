@@ -45,9 +45,7 @@ export default function CalendarGrid({
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Relative gradient: min/max across all dates that have at least 1 person
   const counts = Object.values(availability).filter((n) => n > 0)
-  const minCount = counts.length ? Math.min(...counts) : 0
   const maxCount = counts.length ? Math.max(...counts) : 0
 
   return (
@@ -94,7 +92,6 @@ export default function CalendarGrid({
                     date={dateStr}
                     day={day}
                     count={availability[dateStr] ?? 0}
-                    minCount={minCount}
                     maxCount={maxCount}
                     isMyDate={myDates.has(dateStr)}
                     isPast={isPast}
