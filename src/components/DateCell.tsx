@@ -13,10 +13,10 @@ interface DateCellProps {
 function getColor(count: number, max: number): { bg: string; text: string } | null {
   if (count === 0) return null
   const pct = max === 0 ? 1 : count / max        // 0..1, how close to max
-  // Interpolate gray → green: hue fixed at 120, saturation 0→72%, lightness 80→60%
-  const sat = Math.round(pct * 72)
-  const light = Math.round(80 - pct * 20)
-  const textDark = pct < 0.6
+  // Light green → dark green: lightness 82→32%, saturation 35→55%
+  const sat = Math.round(35 + pct * 20)
+  const light = Math.round(82 - pct * 50)
+  const textDark = light > 55
   return {
     bg: `hsl(120, ${sat}%, ${light}%)`,
     text: textDark ? '#1f2937' : '#ffffff',
