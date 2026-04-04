@@ -53,8 +53,8 @@ export default function DateCell({
         ...(isPast
           ? {}
           : isMyDate
-          ? { boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.35), inset 0 1px 2px rgba(0,0,0,0.2)' }
-          : { boxShadow: '0 2px 4px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15)' }),
+          ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.3)' }
+          : { boxShadow: '0 4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25)' }),
       }}
     >
       {/* day number */}
