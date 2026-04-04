@@ -45,13 +45,16 @@ export default function DateCell({
           : !color
           ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer'
           : 'cursor-pointer hover:brightness-110',
-        isMyDate && !isPast ? 'ring-4' : '',
       ]
         .filter(Boolean)
         .join(' ')}
       style={{
         ...(color && !isPast ? { backgroundColor: color.bg } : {}),
-        ...(isMyDate && !isPast ? { '--tw-ring-color': 'hsl(45,90%,45%)' } as React.CSSProperties : {}),
+        ...(isPast
+          ? {}
+          : isMyDate
+          ? { boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.35), inset 0 1px 2px rgba(0,0,0,0.2)' }
+          : { boxShadow: '0 2px 4px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15)' }),
       }}
     >
       {/* day number */}
