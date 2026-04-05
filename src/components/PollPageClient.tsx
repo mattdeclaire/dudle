@@ -46,6 +46,15 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const handleNameSuccess = useCallback(
     (id: number, name: string) => {
       setParticipantId(id)
+      setActiveIds((prev) => new Set([...prev, id]))
+      setPollData((prev) => {
+        const alreadyIn = prev.participants.some((p) => p.id === id)
+        if (alreadyIn) return prev
+        return {
+          ...prev,
+          participants: [...prev.participants, { id, poll_id: prev.poll.id, name }],
+        }
+      })
       const existing = pollData.participantAvailability[id] ?? []
       setMyDates(new Set(existing))
       setPhase('calendar')
