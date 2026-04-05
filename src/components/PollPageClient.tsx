@@ -160,22 +160,6 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
 
       {phase === 'calendar' && (
         <>
-          {/* Share link */}
-          <div className="flex items-center gap-2 mb-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <input
-              type="text"
-              readOnly
-              value={shareUrl}
-              className="flex-1 text-sm text-gray-600 bg-transparent outline-none min-w-0"
-            />
-            <button
-              onClick={handleCopy}
-              className="shrink-0 text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-            >
-              {copied ? 'Copied!' : 'Copy link'}
-            </button>
-          </div>
-
           {/* Participant toggles */}
           {pollData.participants.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
@@ -210,6 +194,22 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
             myDates={myDates}
             onToggle={handleToggle}
           />
+
+          {/* Share link */}
+          <div className="flex items-center gap-2 mt-8 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <input
+              type="text"
+              readOnly
+              value={shareUrl}
+              className="flex-1 text-sm text-gray-600 bg-transparent outline-none min-w-0"
+            />
+            <button
+              onClick={handleCopy}
+              className="shrink-0 text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
         </>
       )}
     </div>
