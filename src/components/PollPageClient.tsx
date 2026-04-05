@@ -193,6 +193,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
                   >
                     everyone
                   </button>
+                  <span className="text-gray-300">|</span>
                   <button
                     onClick={() => setActiveIds(new Set([participantId]))}
                     className="text-indigo-500 hover:text-indigo-700 underline"
