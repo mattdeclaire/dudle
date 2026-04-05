@@ -22,9 +22,5 @@ export default async function PollPage({ params }: Props) {
   const data = await getPollWithAvailability(id)
   if (!data) notFound()
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-      <PollPageClient initialData={data} />
-    </div>
-  )
+  return <PollPageClient initialData={data} />
 }

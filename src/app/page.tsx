@@ -8,9 +8,7 @@ export default function HomePage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Dudle</h1>
           <p className="text-gray-500">Find a date that works for everyone</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <CreatePollForm />
-        </div>
+        <CreatePollForm />
       </div>
     </div>
   )
