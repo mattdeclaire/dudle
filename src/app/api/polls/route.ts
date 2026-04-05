@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { randomBytes } from 'crypto'
 import { createPollWithOwner, initSchema } from '@/lib/db'
+
+function generateId(): string {
+  return randomBytes(6).toString('base64url').slice(0, 8)
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -14,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   await initSchema()
-  const id = uuidv4()
+  const id = generateId()
   const { pollId, participantId } = await createPollWithOwner(
     id,
     title.trim(),
