@@ -191,7 +191,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
                     onClick={() => setActiveIds(new Set(pollData.participants.map((p) => p.id)))}
                     className="text-indigo-500 hover:text-indigo-700 underline"
                   >
-                    all
+                    everyone
                   </button>
                   <button
                     onClick={() => setActiveIds(new Set([participantId]))}
