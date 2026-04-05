@@ -184,21 +184,22 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
                 )
               })}
               {participantId && (
-                <>
-                  <span className="text-gray-300 text-xs">|</span>
+                <span className="text-xs text-gray-500 flex items-center gap-1">
+                  <span className="text-gray-300 mr-0.5">|</span>
+                  show:
                   <button
                     onClick={() => setActiveIds(new Set(pollData.participants.map((p) => p.id)))}
-                    className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+                    className="text-indigo-500 hover:text-indigo-700 underline"
                   >
-                    show all
+                    all
                   </button>
                   <button
                     onClick={() => setActiveIds(new Set([participantId]))}
-                    className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+                    className="text-indigo-500 hover:text-indigo-700 underline"
                   >
                     only me
                   </button>
-                </>
+                </span>
               )}
             </div>
           )}
