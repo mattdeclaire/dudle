@@ -208,7 +208,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
             availability={filteredAvailability}
             participantAvailability={filteredParticipantAvailability}
             participants={pollData.participants.filter((p) => activeIds.has(p.id))}
-            myDates={myDates}
+            myDates={participantId && activeIds.has(participantId) ? myDates : new Set<string>()}
             onToggle={handleToggle}
           />
 
