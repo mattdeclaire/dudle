@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { PollData } from '@/lib/types'
 import NameEntryForm from './NameEntryForm'
 import CalendarGrid from './CalendarGrid'
@@ -13,10 +13,12 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const pollId = initialData.poll.id
   const [phase, setPhase] = useState<'name' | 'calendar'>('name')
   const [participantId, setParticipantId] = useState<number | null>(null)
-  const [myName, setMyName] = useState<string>('')
   const [pollData, setPollData] = useState<PollData>(initialData)
   const [myDates, setMyDates] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [activeIds, setActiveIds] = useState<Set<number>>(
+    () => new Set(initialData.participants.map((p) => p.id)),
+  )
 
   useEffect(() => {
     const stored = localStorage.getItem(`participant-${pollId}`)
@@ -27,21 +29,28 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         const existing = initialData.participantAvailability[id] ?? []
         setMyDates(new Set(existing))
         setParticipantId(id)
-        setMyName(participant.name)
         setPhase('calendar')
       }
     }
   }, [pollId, initialData])
 
+  // Keep activeIds in sync when new participants join
+  useEffect(() => {
+    setActiveIds((prev) => {
+      const next = new Set(prev)
+      for (const p of pollData.participants) next.add(p.id)
+      return next
+    })
+  }, [pollData.participants])
+
   const handleNameSuccess = useCallback(
     (id: number, name: string) => {
       setParticipantId(id)
-      setMyName(name)
       const existing = pollData.participantAvailability[id] ?? []
       setMyDates(new Set(existing))
       setPhase('calendar')
     },
-    [pollData.participantAvailability]
+    [pollData.participantAvailability],
   )
 
   const handleToggle = useCallback(
@@ -70,7 +79,6 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date }),
       }).catch(() => {
-        // Revert on failure
         setMyDates((prev) => {
           const next = new Set(prev)
           wasSelected ? next.add(date) : next.delete(date)
@@ -79,22 +87,55 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         setPollData((prev) => {
           const newCount = (prev.availability[date] ?? 0) + (wasSelected ? 1 : -1)
           const prevDates = prev.participantAvailability[participantId] ?? []
-          const revertedDates = wasSelected ? [...prevDates, date] : prevDates.filter((d) => d !== date)
+          const revertedDates = wasSelected
+            ? [...prevDates, date]
+            : prevDates.filter((d) => d !== date)
           return {
             ...prev,
             availability: { ...prev.availability, [date]: Math.max(0, newCount) },
-            participantAvailability: { ...prev.participantAvailability, [participantId]: revertedDates },
+            participantAvailability: {
+              ...prev.participantAvailability,
+              [participantId]: revertedDates,
+            },
           }
         })
       })
     },
-    [participantId, pollId, myDates]
+    [participantId, pollId, myDates],
   )
 
+  const toggleParticipant = useCallback((id: number) => {
+    setActiveIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }, [])
+
+  // Recompute availability counts from participantAvailability filtered by activeIds
+  const filteredAvailability = useMemo(() => {
+    const result: Record<string, number> = {}
+    for (const p of pollData.participants) {
+      if (!activeIds.has(p.id)) continue
+      for (const date of pollData.participantAvailability[p.id] ?? []) {
+        result[date] = (result[date] ?? 0) + 1
+      }
+    }
+    return result
+  }, [pollData.participants, pollData.participantAvailability, activeIds])
+
+  const filteredParticipantAvailability = useMemo(() => {
+    const result: Record<number, string[]> = {}
+    for (const p of pollData.participants) {
+      if (activeIds.has(p.id)) {
+        result[p.id] = pollData.participantAvailability[p.id] ?? []
+      }
+    }
+    return result
+  }, [pollData.participants, pollData.participantAvailability, activeIds])
+
   const shareUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/d/${pollId}`
-      : `/d/${pollId}`
+    typeof window !== 'undefined' ? `${window.location.origin}/d/${pollId}` : `/d/${pollId}`
 
   async function handleCopy() {
     try {
@@ -111,9 +152,6 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{pollData.poll.title}</h1>
-        {phase === 'calendar' && myName && (
-          <p className="text-gray-500 text-sm mt-1">Editing as {myName}</p>
-        )}
       </div>
 
       {phase === 'name' && (
@@ -138,56 +176,40 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
             </button>
           </div>
 
-          {/* Participants */}
+          {/* Participant toggles */}
           {pollData.participants.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
-              {pollData.participants.map((p) => (
-                <span
-                  key={p.id}
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    p.id === participantId
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {p.name}
-                </span>
-              ))}
+              {pollData.participants.map((p) => {
+                const active = activeIds.has(p.id)
+                const isMe = p.id === participantId
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => toggleParticipant(p.id)}
+                    className={[
+                      'px-2 py-1 rounded-full text-xs font-medium transition-colors',
+                      active
+                        ? isMe
+                          ? 'bg-indigo-100 text-indigo-700'
+                          : 'bg-gray-200 text-gray-700'
+                        : 'bg-gray-100 text-gray-300 line-through',
+                    ].join(' ')}
+                  >
+                    {p.name}
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {/* Calendar */}
           <CalendarGrid
-            availability={pollData.availability}
-            participantAvailability={pollData.participantAvailability}
-            participants={pollData.participants}
+            availability={filteredAvailability}
+            participantAvailability={filteredParticipantAvailability}
+            participants={pollData.participants.filter((p) => activeIds.has(p.id))}
             myDates={myDates}
             onToggle={handleToggle}
           />
-
-          {/* Legend */}
-          <div className="mt-8 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-gray-100 border border-gray-200" />
-              <span>No one</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,40%,74%)' }} />
-              <span>Few available</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,47%,57%)' }} />
-              <span>Some available</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(120,55%,32%)' }} />
-              <span>Most available</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-gray-100 ring-4 ring-indigo-500" />
-              <span>You&apos;re available</span>
-            </div>
-          </div>
         </>
       )}
     </div>
