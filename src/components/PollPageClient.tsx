@@ -162,7 +162,24 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         <>
           {/* Participant toggles */}
           {pollData.participants.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              {participantId && (
+                <>
+                  <button
+                    onClick={() => setActiveIds(new Set(pollData.participants.map((p) => p.id)))}
+                    className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+                  >
+                    show all
+                  </button>
+                  <button
+                    onClick={() => setActiveIds(new Set([participantId]))}
+                    className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+                  >
+                    only me
+                  </button>
+                  <span className="text-gray-300 text-xs">|</span>
+                </>
+              )}
               {pollData.participants.map((p) => {
                 const active = activeIds.has(p.id)
                 const isMe = p.id === participantId
