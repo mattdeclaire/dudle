@@ -56,9 +56,12 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
       })
       setPollData((prev) => {
         const newCount = (prev.availability[date] ?? 0) + (wasSelected ? -1 : 1)
+        const prevDates = prev.participantAvailability[participantId] ?? []
+        const newDates = wasSelected ? prevDates.filter((d) => d !== date) : [...prevDates, date]
         return {
           ...prev,
           availability: { ...prev.availability, [date]: Math.max(0, newCount) },
+          participantAvailability: { ...prev.participantAvailability, [participantId]: newDates },
         }
       })
 
@@ -75,9 +78,12 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
         })
         setPollData((prev) => {
           const newCount = (prev.availability[date] ?? 0) + (wasSelected ? 1 : -1)
+          const prevDates = prev.participantAvailability[participantId] ?? []
+          const revertedDates = wasSelected ? [...prevDates, date] : prevDates.filter((d) => d !== date)
           return {
             ...prev,
             availability: { ...prev.availability, [date]: Math.max(0, newCount) },
+            participantAvailability: { ...prev.participantAvailability, [participantId]: revertedDates },
           }
         })
       })
@@ -153,6 +159,8 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
           {/* Calendar */}
           <CalendarGrid
             availability={pollData.availability}
+            participantAvailability={pollData.participantAvailability}
+            participants={pollData.participants}
             myDates={myDates}
             onToggle={handleToggle}
           />

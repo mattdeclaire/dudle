@@ -11,6 +11,8 @@ const MONTH_NAMES = [
 interface CalendarGridProps {
   monthCount?: number
   availability: Record<string, number>
+  participantAvailability: Record<number, string[]>
+  participants: { id: number; name: string }[]
   myDates: Set<string>
   onToggle: (date: string) => void
 }
@@ -38,6 +40,8 @@ function toDateString(year: number, month: number, day: number): string {
 export default function CalendarGrid({
   monthCount = 3,
   availability,
+  participantAvailability,
+  participants,
   myDates,
   onToggle,
 }: CalendarGridProps) {
@@ -47,6 +51,15 @@ export default function CalendarGrid({
 
   const counts = Object.values(availability).filter((n) => n > 0)
   const maxCount = counts.length ? Math.max(...counts) : 0
+
+  // Build date → participant names map
+  const dateToNames: Record<string, string[]> = {}
+  for (const p of participants) {
+    for (const date of participantAvailability[p.id] ?? []) {
+      if (!dateToNames[date]) dateToNames[date] = []
+      dateToNames[date].push(p.name)
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -89,12 +102,12 @@ export default function CalendarGrid({
                 return (
                   <DateCell
                     key={dateStr}
-                    date={dateStr}
                     day={day}
                     count={availability[dateStr] ?? 0}
                     maxCount={maxCount}
                     isMyDate={myDates.has(dateStr)}
                     isPast={isPast}
+                    names={dateToNames[dateStr] ?? []}
                     onToggle={() => onToggle(dateStr)}
                   />
                 )
