@@ -16,8 +16,8 @@ interface DateCellProps {
 function getColor(count: number, max: number): { bg: string; text: string } | null {
   if (count === 0) return null
   const pct = max === 0 ? 1 : count / max
-  const sat = Math.round(35 + pct * 20)
-  const light = Math.round(82 - pct * 50)
+  const sat = Math.round(35 + pct * 25)
+  const light = Math.round(82 - pct * 60)
   const textDark = light > 55
   return {
     bg: `hsl(120, ${sat}%, ${light}%)`,
