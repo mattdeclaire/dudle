@@ -49,8 +49,7 @@ export default function CalendarGrid({
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const counts = Object.values(availability).filter((n) => n > 0)
-  const maxCount = counts.length ? Math.max(...counts) : 0
+  const maxCount = participants.length
 
   // Build date → participant names map
   const dateToNames: Record<string, string[]> = {}
