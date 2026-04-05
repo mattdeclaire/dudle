@@ -95,7 +95,7 @@ export default function DateCell({
             ? {}
             : isMyDate
             ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.3)' }
-            : { boxShadow: '0 4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25)' }),
+            : { boxShadow: '0 4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 3px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.15)' }),
         }}
       >
         <span
