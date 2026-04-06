@@ -252,9 +252,9 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
 
           {/* CTA */}
           <p className="mt-6 text-center text-sm text-gray-400">
-            Need to schedule something?{' '}
+            Need to schedule something?<br />
             <a href="/" className="text-indigo-500 hover:text-indigo-700 underline">
-              Create a new Dudle
+              Create a new Düdle
             </a>
           </p>
         </>
