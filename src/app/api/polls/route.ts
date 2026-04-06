@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
-import { createPollWithOwner, initSchema } from '@/lib/db'
+import { createPoll, initSchema } from '@/lib/db'
 
 function generateId(): string {
   return randomBytes(6).toString('base64url').slice(0, 8)
@@ -8,25 +8,20 @@ function generateId(): string {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { title, ownerName, description, startDate, endDate } = body
+  const { title, description, startDate, endDate } = body
 
-  if (!title?.trim() || !ownerName?.trim()) {
-    return NextResponse.json(
-      { error: 'title and ownerName are required' },
-      { status: 400 }
-    )
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'title is required' }, { status: 400 })
   }
 
   await initSchema()
-  const id = generateId()
-  const { pollId, participantId } = await createPollWithOwner(
-    id,
+  const pollId = await createPoll(
+    generateId(),
     title.trim(),
-    ownerName.trim(),
     description?.trim() || null,
     startDate || null,
     endDate || null,
   )
 
-  return NextResponse.json({ pollId, participantId }, { status: 201 })
+  return NextResponse.json({ pollId }, { status: 201 })
 }

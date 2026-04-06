@@ -33,19 +33,15 @@ export async function initSchema() {
   `
 }
 
-export async function createPollWithOwner(
+export async function createPoll(
   id: string,
   title: string,
-  ownerName: string,
   description: string | null,
   startDate: string | null,
   endDate: string | null,
-): Promise<{ pollId: string; participantId: number }> {
+): Promise<string> {
   await sql`INSERT INTO polls (id, title, description, start_date, end_date) VALUES (${id}, ${title}, ${description}, ${startDate}, ${endDate})`
-  const result = await sql<{ id: number }>`
-    INSERT INTO participants (poll_id, name) VALUES (${id}, ${ownerName}) RETURNING id
-  `
-  return { pollId: id, participantId: result.rows[0].id }
+  return id
 }
 
 export async function getPollWithAvailability(id: string): Promise<PollData | null> {
