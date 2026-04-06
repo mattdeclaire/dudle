@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { PollData } from '@/lib/types'
 import NameEntryForm from './NameEntryForm'
 import CalendarGrid from './CalendarGrid'
@@ -161,6 +163,13 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{pollData.poll.title}</h1>
+        {pollData.poll.description && (
+          <div className="mt-3 text-sm text-gray-600 prose prose-sm max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {pollData.poll.description}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
 
       {phase === 'name' && (
@@ -216,6 +225,8 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
 
           {/* Calendar */}
           <CalendarGrid
+            startDate={pollData.poll.start_date}
+            endDate={pollData.poll.end_date}
             availability={filteredAvailability}
             participantAvailability={filteredParticipantAvailability}
             participants={pollData.participants.filter((p) => activeIds.has(p.id))}

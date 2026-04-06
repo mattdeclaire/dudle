@@ -8,7 +8,7 @@ function generateId(): string {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { title, ownerName } = body
+  const { title, ownerName, description, startDate, endDate } = body
 
   if (!title?.trim() || !ownerName?.trim()) {
     return NextResponse.json(
@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
   const { pollId, participantId } = await createPollWithOwner(
     id,
     title.trim(),
-    ownerName.trim()
+    ownerName.trim(),
+    description?.trim() || null,
+    startDate || null,
+    endDate || null,
   )
 
   return NextResponse.json({ pollId, participantId }, { status: 201 })

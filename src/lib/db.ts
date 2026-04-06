@@ -6,9 +6,16 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS polls (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
+      description TEXT,
+      start_date TEXT,
+      end_date TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `
+  // Migrate existing tables
+  await sql`ALTER TABLE polls ADD COLUMN IF NOT EXISTS description TEXT`
+  await sql`ALTER TABLE polls ADD COLUMN IF NOT EXISTS start_date TEXT`
+  await sql`ALTER TABLE polls ADD COLUMN IF NOT EXISTS end_date TEXT`
   await sql`
     CREATE TABLE IF NOT EXISTS participants (
       id SERIAL PRIMARY KEY,
@@ -29,9 +36,12 @@ export async function initSchema() {
 export async function createPollWithOwner(
   id: string,
   title: string,
-  ownerName: string
+  ownerName: string,
+  description: string | null,
+  startDate: string | null,
+  endDate: string | null,
 ): Promise<{ pollId: string; participantId: number }> {
-  await sql`INSERT INTO polls (id, title) VALUES (${id}, ${title})`
+  await sql`INSERT INTO polls (id, title, description, start_date, end_date) VALUES (${id}, ${title}, ${description}, ${startDate}, ${endDate})`
   const result = await sql<{ id: number }>`
     INSERT INTO participants (poll_id, name) VALUES (${id}, ${ownerName}) RETURNING id
   `

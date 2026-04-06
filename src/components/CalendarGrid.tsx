@@ -9,7 +9,8 @@ const MONTH_NAMES = [
 ]
 
 interface CalendarGridProps {
-  monthCount?: number
+  startDate: string | null
+  endDate: string | null
   availability: Record<string, number>
   participantAvailability: Record<number, string[]>
   participants: { id: number; name: string }[]
@@ -17,14 +18,25 @@ interface CalendarGridProps {
   onToggle: (date: string) => void
 }
 
-function getMonths(count: number): { year: number; month: number }[] {
-  const now = new Date()
-  const result = []
-  for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
-    result.push({ year: d.getFullYear(), month: d.getMonth() })
+function getMonths(startDate: string | null, endDate: string | null): { year: number; month: number }[] {
+  if (startDate && endDate) {
+    const start = new Date(startDate + 'T00:00:00')
+    const end = new Date(endDate + 'T00:00:00')
+    const result = []
+    const cur = new Date(start.getFullYear(), start.getMonth(), 1)
+    const last = new Date(end.getFullYear(), end.getMonth(), 1)
+    while (cur <= last) {
+      result.push({ year: cur.getFullYear(), month: cur.getMonth() })
+      cur.setMonth(cur.getMonth() + 1)
+    }
+    return result
   }
-  return result
+  // Fallback: 3 months from today
+  const now = new Date()
+  return Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    return { year: d.getFullYear(), month: d.getMonth() }
+  })
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -38,14 +50,15 @@ function toDateString(year: number, month: number, day: number): string {
 }
 
 export default function CalendarGrid({
-  monthCount = 3,
+  startDate,
+  endDate,
   availability,
   participantAvailability,
   participants,
   myDates,
   onToggle,
 }: CalendarGridProps) {
-  const months = getMonths(monthCount)
+  const months = getMonths(startDate, endDate)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -60,8 +73,10 @@ export default function CalendarGrid({
     }
   }
 
+  const cols = months.length === 1 ? 'grid-cols-1' : months.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className={`grid ${cols} gap-8`}>
       {months.map(({ year, month }) => {
         const firstDayOfWeek = new Date(year, month, 1).getDay()
         const daysInMonth = getDaysInMonth(year, month)
@@ -75,10 +90,7 @@ export default function CalendarGrid({
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DAY_LABELS.map((d) => (
-                <div
-                  key={d}
-                  className="text-center text-xs text-gray-400 font-medium py-1"
-                >
+                <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">
                   {d}
                 </div>
               ))}
@@ -86,17 +98,17 @@ export default function CalendarGrid({
 
             {/* Date cells */}
             <div className="grid grid-cols-7 gap-1">
-              {/* Leading empty cells */}
               {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} />
               ))}
-
-              {/* Day cells */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1
                 const dateStr = toDateString(year, month, day)
                 const cellDate = new Date(year, month, day)
-                const isPast = cellDate < today
+                const outOfRange =
+                  (startDate != null && dateStr < startDate) ||
+                  (endDate != null && dateStr > endDate)
+                const isPast = cellDate < today || outOfRange
 
                 return (
                   <DateCell
