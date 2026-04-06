@@ -249,6 +249,14 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               {copied ? 'Copied!' : 'Copy link'}
             </button>
           </div>
+
+          {/* CTA */}
+          <p className="mt-6 text-center text-sm text-gray-400">
+            Need to schedule something?{' '}
+            <a href="/" className="text-indigo-500 hover:text-indigo-700 underline">
+              Create a new Dudle
+            </a>
+          </p>
         </>
       )}
     </div>
