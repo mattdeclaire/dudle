@@ -88,7 +88,7 @@ export default function CalendarGrid({
             </h3>
 
             {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 gap-2 mb-1">
+            <div className="grid grid-cols-7 gap-0 mb-1">
               {DAY_LABELS.map((d) => (
                 <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">
                   {d}
@@ -97,7 +97,7 @@ export default function CalendarGrid({
             </div>
 
             {/* Date cells */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-0">
               {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} />
               ))}

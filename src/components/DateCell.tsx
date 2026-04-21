@@ -79,7 +79,7 @@ export default function DateCell({
         onPointerLeave={handlePointerLeave}
         disabled={isPast}
         className={[
-          'relative flex items-center justify-center rounded-lg w-full aspect-square',
+          'relative flex items-center justify-center w-full aspect-square',
           'text-sm font-medium select-none transition-[filter]',
           isPast
             ? 'opacity-30 cursor-not-allowed bg-gray-100'
@@ -89,14 +89,7 @@ export default function DateCell({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={{
-          ...(color && !isPast ? { backgroundColor: color.bg } : {}),
-          ...(isPast
-            ? {}
-            : isMyDate
-            ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.3)' }
-            : { boxShadow: '0 4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 3px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.15)' }),
-        }}
+        style={color && !isPast ? { backgroundColor: color.bg } : undefined}
       >
         <span
           className="font-semibold leading-none"
