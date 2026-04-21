@@ -130,6 +130,14 @@ export default function CalendarGrid({
                   (startDate != null && dateStr < startDate) ||
                   (endDate != null && dateStr > endDate)
                 const isPast = cellDate < today || outOfRange
+                const col = (firstDayOfWeek + i) % 7
+
+                const selectedNeighbors = myDates.has(dateStr) ? {
+                  top:    day > 7 && myDates.has(toDateString(year, month, day - 7)),
+                  bottom: day + 7 <= daysInMonth && myDates.has(toDateString(year, month, day + 7)),
+                  left:   col > 0 && day > 1 && myDates.has(toDateString(year, month, day - 1)),
+                  right:  col < 6 && day < daysInMonth && myDates.has(toDateString(year, month, day + 1)),
+                } : undefined
 
                 return (
                   <DateCell
@@ -140,6 +148,7 @@ export default function CalendarGrid({
                     isMyDate={myDates.has(dateStr)}
                     isPast={isPast}
                     names={dateToNames[dateStr] ?? []}
+                    selectedNeighbors={selectedNeighbors}
                     onToggle={() => onToggle(dateStr)}
                   />
                 )

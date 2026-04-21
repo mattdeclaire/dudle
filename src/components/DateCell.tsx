@@ -10,6 +10,7 @@ interface DateCellProps {
   isMyDate: boolean
   isPast: boolean
   names: string[]
+  selectedNeighbors?: { top: boolean; right: boolean; bottom: boolean; left: boolean }
   onToggle: () => void
 }
 
@@ -32,9 +33,22 @@ export default function DateCell({
   isMyDate,
   isPast,
   names,
+  selectedNeighbors,
   onToggle,
 }: DateCellProps) {
   const color = getColor(count, maxCount)
+
+  const insetShadow = (() => {
+    if (!isMyDate || isPast) return undefined
+    const n = selectedNeighbors ?? { top: false, right: false, bottom: false, left: false }
+    const parts = [
+      !n.top    && 'inset 0 5px 8px rgba(0,0,0,0.38)',
+      !n.bottom && 'inset 0 -5px 8px rgba(0,0,0,0.28)',
+      !n.left   && 'inset 5px 0 8px rgba(0,0,0,0.28)',
+      !n.right  && 'inset -5px 0 8px rgba(0,0,0,0.28)',
+    ].filter(Boolean)
+    return parts.length ? parts.join(', ') : undefined
+  })()
   const [popover, setPopover] = useState<{ x: number; y: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
@@ -91,9 +105,7 @@ export default function DateCell({
           .join(' ')}
         style={{
           ...(color && !isPast ? { backgroundColor: color.bg } : {}),
-          ...(isMyDate && !isPast
-            ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.25)' }
-            : {}),
+          ...(insetShadow ? { boxShadow: insetShadow } : {}),
         }}
       >
         <span
