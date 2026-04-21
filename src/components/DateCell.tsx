@@ -10,7 +10,6 @@ interface DateCellProps {
   isMyDate: boolean
   isPast: boolean
   names: string[]
-  selectedNeighbors?: { top: boolean; right: boolean; bottom: boolean; left: boolean }
   onToggle: () => void
 }
 
@@ -33,11 +32,9 @@ export default function DateCell({
   isMyDate,
   isPast,
   names,
-  selectedNeighbors,
   onToggle,
 }: DateCellProps) {
   const color = getColor(count, maxCount)
-  const n = selectedNeighbors ?? { top: false, right: false, bottom: false, left: false }
   const [popover, setPopover] = useState<{ x: number; y: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
@@ -82,7 +79,7 @@ export default function DateCell({
         onPointerLeave={handlePointerLeave}
         disabled={isPast}
         className={[
-          'relative flex items-center justify-center w-full aspect-square overflow-hidden',
+          'relative flex items-center justify-center w-full aspect-square',
           'text-sm font-medium select-none transition-[filter]',
           isPast
             ? 'opacity-30 cursor-not-allowed bg-gray-100'
@@ -92,22 +89,17 @@ export default function DateCell({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={color && !isPast ? { backgroundColor: color.bg } : undefined}
+        style={{
+          ...(color && !isPast ? { backgroundColor: color.bg } : {}),
+          ...(isMyDate && !isPast ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.3)' } : {}),
+        }}
       >
         <span
-          className="relative z-10 font-semibold leading-none"
+          className="font-semibold leading-none"
           style={{ color: color && !isPast ? color.text : undefined }}
         >
           {day}
         </span>
-        {isMyDate && !isPast && (
-          <>
-            {!n.top    && <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.32), transparent)' }} />}
-            {!n.bottom && <div className="absolute inset-x-0 bottom-0 h-2/5 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.22), transparent)' }} />}
-            {!n.left   && <div className="absolute inset-y-0 left-0 w-2/5 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.22), transparent)' }} />}
-            {!n.right  && <div className="absolute inset-y-0 right-0 w-2/5 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.22), transparent)' }} />}
-          </>
-        )}
       </button>
 
       {popover &&
