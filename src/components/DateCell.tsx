@@ -38,16 +38,16 @@ export default function DateCell({
 }: DateCellProps) {
   const color = getColor(count, maxCount)
 
-  const pressedOverlay = (() => {
+  const insetShadow = (() => {
     if (!isMyDate || isPast) return undefined
     const n = selectedNeighbors ?? { top: false, right: false, bottom: false, left: false }
-    const layers = [
-      !n.top    && 'linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, transparent 55%)',
-      !n.left   && 'linear-gradient(to right,  rgba(0,0,0,0.18) 0%, transparent 55%)',
-      !n.bottom && 'linear-gradient(to top,    rgba(0,0,0,0.12) 0%, transparent 45%)',
-      !n.right  && 'linear-gradient(to left,   rgba(0,0,0,0.12) 0%, transparent 45%)',
+    const parts = [
+      !n.top    && 'inset 0 4px 4px rgba(0,0,0,0.32)',
+      !n.bottom && 'inset 0 -4px 4px rgba(0,0,0,0.22)',
+      !n.left   && 'inset 4px 0 4px rgba(0,0,0,0.22)',
+      !n.right  && 'inset -4px 0 4px rgba(0,0,0,0.22)',
     ].filter(Boolean)
-    return layers.length ? layers.join(', ') : undefined
+    return parts.length ? parts.join(', ') : undefined
   })()
   const [popover, setPopover] = useState<{ x: number; y: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -105,7 +105,7 @@ export default function DateCell({
           .join(' ')}
         style={{
           ...(color && !isPast ? { backgroundColor: color.bg } : {}),
-          ...(pressedOverlay ? { backgroundImage: pressedOverlay } : {}),
+          ...(insetShadow ? { boxShadow: insetShadow } : {}),
         }}
       >
         <span
