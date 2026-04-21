@@ -75,7 +75,28 @@ export default function CalendarGrid({
 
   const cols = months.length === 1 ? 'grid-cols-1' : months.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'
 
+  const LEGEND_STEPS = 9
+  const legendSteps = Array.from({ length: LEGEND_STEPS }, (_, i) => {
+    const pct = (i + 1) / LEGEND_STEPS
+    const sat = Math.round(35 + pct * 25)
+    const light = Math.round(82 - pct * 60)
+    return `hsl(120, ${sat}%, ${light}%)`
+  })
+
   return (
+    <>
+      {/* Gradient legend */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-gray-400 shrink-0">fewer</span>
+        <div className="flex flex-1 rounded overflow-hidden h-3">
+          <div className="flex-1 bg-gray-200" />
+          {legendSteps.map((color, i) => (
+            <div key={i} className="flex-1 h-full" style={{ backgroundColor: color }} />
+          ))}
+        </div>
+        <span className="text-xs text-gray-400 shrink-0">more</span>
+      </div>
+
     <div className={`grid ${cols} gap-8`}>
       {months.map(({ year, month }) => {
         const firstDayOfWeek = new Date(year, month, 1).getDay()
@@ -128,5 +149,6 @@ export default function CalendarGrid({
         )
       })}
     </div>
+    </>
   )
 }

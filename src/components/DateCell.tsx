@@ -89,7 +89,12 @@ export default function DateCell({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={color && !isPast ? { backgroundColor: color.bg } : undefined}
+        style={{
+          ...(color && !isPast ? { backgroundColor: color.bg } : {}),
+          ...(isMyDate && !isPast
+            ? { boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 2px 4px rgba(0,0,0,0.25)' }
+            : {}),
+        }}
       >
         <span
           className="font-semibold leading-none"
