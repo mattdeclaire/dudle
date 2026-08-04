@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
-import { createPoll, initSchema } from '@/lib/db'
+import { createPoll } from '@/lib/db'
 
 function generateId(): string {
   return randomBytes(6).toString('base64url').slice(0, 8)
@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
   if (!title?.trim()) {
     return NextResponse.json({ error: 'title is required' }, { status: 400 })
   }
-
-  await initSchema()
   const pollId = await createPoll(
     generateId(),
     title.trim(),

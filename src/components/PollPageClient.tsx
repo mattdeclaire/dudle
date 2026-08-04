@@ -18,6 +18,10 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const [pollData, setPollData] = useState<PollData>(initialData)
   const [myDates, setMyDates] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [transferCode, setTransferCode] = useState<string | null>(null)
+  const [transferLoading, setTransferLoading] = useState(false)
+  const [transferError, setTransferError] = useState('')
+  const [personalCopied, setPersonalCopied] = useState(false)
   const [activeIds, setActiveIds] = useState<Set<number>>(
     () => new Set(initialData.participants.map((p) => p.id)),
   )
@@ -148,6 +152,24 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const shareUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/d/${pollId}` : `/d/${pollId}`
 
+  async function handleGetTransferCode() {
+    if (!participantId) return
+    setTransferLoading(true)
+    setTransferError('')
+    try {
+      const res = await fetch(`/api/polls/${pollId}/participants/${participantId}/transfer`, {
+        method: 'POST',
+      })
+      if (!res.ok) throw new Error('Failed to get code')
+      const data = await res.json()
+      setTransferCode(data.code)
+    } catch {
+      setTransferError('Could not get a code. Please try again.')
+    } finally {
+      setTransferLoading(false)
+    }
+  }
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(shareUrl)
@@ -249,6 +271,65 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               {copied ? 'Copied!' : 'Copy link'}
             </button>
           </div>
+
+          {/* Device transfer */}
+          {participantId && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              {transferCode ? (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    On your other device, open this event and enter your code:
+                  </p>
+                  <p className="my-2 text-3xl font-mono font-bold tracking-[0.3em] text-gray-900">
+                    {transferCode}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2">or open your personal link there:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}/d/${pollId}/${transferCode}`}
+                      className="flex-1 text-sm text-gray-600 bg-white border border-gray-200 rounded px-2 py-1 outline-none min-w-0"
+                    />
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            `${window.location.origin}/d/${pollId}/${transferCode}`,
+                          )
+                          setPersonalCopied(true)
+                          setTimeout(() => setPersonalCopied(false), 2000)
+                        } catch {}
+                      }}
+                      className="shrink-0 text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      {personalCopied ? 'Copied!' : 'Copy link'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400">
+                    This code is yours permanently — anyone with it can act as you, so only
+                    share it with yourself.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm text-gray-600">
+                    Want to continue on another device?
+                  </span>
+                  <button
+                    onClick={handleGetTransferCode}
+                    disabled={transferLoading}
+                    className="shrink-0 text-sm px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                  >
+                    {transferLoading ? 'Getting code…' : 'Get your code'}
+                  </button>
+                </div>
+              )}
+              {transferError && (
+                <p className="mt-2 text-red-600 text-sm text-center">{transferError}</p>
+              )}
+            </div>
+          )}
 
           {/* CTA */}
           <p className="mt-6 text-center text-sm text-gray-400">

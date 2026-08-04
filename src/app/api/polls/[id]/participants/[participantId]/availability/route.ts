@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPollWithAvailability, toggleAvailability, initSchema } from '@/lib/db'
+import { getPollWithAvailability, toggleAvailability } from '@/lib/db'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
-  await initSchema()
   const { id, participantId: participantIdStr } = await params
   const pollData = await getPollWithAvailability(id)
   if (!pollData) {

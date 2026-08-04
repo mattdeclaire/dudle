@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPollWithAvailability, upsertParticipant, initSchema } from '@/lib/db'
+import { getPollWithAvailability, createParticipant } from '@/lib/db'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await initSchema()
   const { id } = await params
   const poll = await getPollWithAvailability(id)
   if (!poll) {
@@ -18,6 +17,6 @@ export async function POST(
     return NextResponse.json({ error: 'name is required' }, { status: 400 })
   }
 
-  const participant = await upsertParticipant(id, name.trim())
+  const participant = await createParticipant(id, name.trim())
   return NextResponse.json({ id: participant.id, name: participant.name })
 }
