@@ -21,7 +21,8 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS participants (
       id SERIAL PRIMARY KEY,
       poll_id TEXT NOT NULL REFERENCES polls(id),
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      code TEXT UNIQUE
     )
   `
   await sql`
@@ -33,22 +34,37 @@ export async function initSchema() {
     )
   `
   await sql`ALTER TABLE participants ADD COLUMN IF NOT EXISTS code TEXT UNIQUE`
-  // Carry codes over from the retired transfer_codes table, then drop it
-  try {
-    await sql`
-      UPDATE participants p SET code = t.code
-      FROM transfer_codes t
-      WHERE t.participant_id = p.id AND p.code IS NULL
-    `
-  } catch {
-    // transfer_codes table already dropped
-  }
-  await sql`DROP TABLE IF EXISTS transfer_codes`
-  // Backfill codes for participants created before codes existed
-  const missing = await sql<{ id: number }>`SELECT id FROM participants WHERE code IS NULL`
-  for (const row of missing.rows) {
-    await assignCode(row.id)
-  }
+  await sql`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+  await runMigration('participant-codes', async () => {
+    // Carry codes over from the retired transfer_codes table, then drop it
+    try {
+      await sql`
+        UPDATE participants p SET code = t.code
+        FROM transfer_codes t
+        WHERE t.participant_id = p.id AND p.code IS NULL
+      `
+    } catch {
+      // transfer_codes table already dropped
+    }
+    await sql`DROP TABLE IF EXISTS transfer_codes`
+    // Backfill codes for participants created before codes existed
+    const missing = await sql<{ id: number }>`SELECT id FROM participants WHERE code IS NULL`
+    for (const row of missing.rows) {
+      await assignCode(row.id)
+    }
+  })
+}
+
+async function runMigration(id: string, fn: () => Promise<void>): Promise<void> {
+  const applied = await sql`SELECT 1 FROM schema_migrations WHERE id = ${id}`
+  if (applied.rows.length > 0) return
+  await fn()
+  await sql`INSERT INTO schema_migrations (id) VALUES (${id}) ON CONFLICT DO NOTHING`
 }
 
 // No ambiguous characters (0/O, 1/I/L) so codes are easy to read off a screen
