@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "npm run migrate && next dev",
+    "build": "npm run migrate && next build",
+    "start": "next start",
+    "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",

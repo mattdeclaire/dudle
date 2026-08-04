@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { lookupTransferCode, initSchema } from '@/lib/db'
+import { lookupTransferCode } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
-  await initSchema()
   const body = await request.json()
   const code = typeof body.code === 'string' ? body.code.trim() : ''
   if (!code) {
