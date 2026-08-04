@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrCreateTransferCode, getParticipant, initSchema } from '@/lib/db'
+import { getParticipantCode, initSchema } from '@/lib/db'
 
 export async function POST(
   _request: NextRequest,
@@ -8,11 +8,10 @@ export async function POST(
   await initSchema()
   const { id, participantId } = await params
 
-  const participant = await getParticipant(id, parseInt(participantId, 10))
-  if (!participant) {
+  const code = await getParticipantCode(id, parseInt(participantId, 10))
+  if (!code) {
     return NextResponse.json({ error: 'Participant not found' }, { status: 404 })
   }
 
-  const code = await getOrCreateTransferCode(id, participant.id)
   return NextResponse.json({ code })
 }

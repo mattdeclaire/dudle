@@ -37,7 +37,9 @@ export default function NameEntryForm({ pollId, onSuccess }: NameEntryFormProps)
 
   return (
     <div className="max-w-sm mx-auto">
-      <p className="text-gray-600 mb-4 text-center">Enter your name to mark your availability</p>
+      <p className="text-gray-600 mb-4 text-center">
+        New here? Enter your name to mark your availability
+      </p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
           type="text"
@@ -65,7 +67,7 @@ export default function NameEntryForm({ pollId, onSuccess }: NameEntryFormProps)
       </div>
 
       <p className="text-gray-600 mb-3 text-center text-sm">
-        Have a code from another device?
+        Already joined? Enter the code from your other device
       </p>
       <RedeemCodeForm pollId={pollId} onSuccess={onSuccess} />
     </div>
