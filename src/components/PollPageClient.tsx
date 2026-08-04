@@ -18,6 +18,9 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const [pollData, setPollData] = useState<PollData>(initialData)
   const [myDates, setMyDates] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [transferCode, setTransferCode] = useState<string | null>(null)
+  const [transferLoading, setTransferLoading] = useState(false)
+  const [transferError, setTransferError] = useState('')
   const [activeIds, setActiveIds] = useState<Set<number>>(
     () => new Set(initialData.participants.map((p) => p.id)),
   )
@@ -148,6 +151,24 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const shareUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/d/${pollId}` : `/d/${pollId}`
 
+  async function handleGetTransferCode() {
+    if (!participantId) return
+    setTransferLoading(true)
+    setTransferError('')
+    try {
+      const res = await fetch(`/api/polls/${pollId}/participants/${participantId}/transfer`, {
+        method: 'POST',
+      })
+      if (!res.ok) throw new Error('Failed to get code')
+      const data = await res.json()
+      setTransferCode(data.code)
+    } catch {
+      setTransferError('Could not get a code. Please try again.')
+    } finally {
+      setTransferLoading(false)
+    }
+  }
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(shareUrl)
@@ -249,6 +270,49 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               {copied ? 'Copied!' : 'Copy link'}
             </button>
           </div>
+
+          {/* Device transfer */}
+          {participantId && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              {transferCode ? (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    On your other device, open this event and enter:
+                  </p>
+                  <p className="my-2 text-3xl font-mono font-bold tracking-[0.3em] text-gray-900">
+                    {transferCode}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    The code works once and expires in 15 minutes.
+                    {' '}
+                    <button
+                      onClick={handleGetTransferCode}
+                      disabled={transferLoading}
+                      className="text-indigo-500 hover:text-indigo-700 underline disabled:opacity-50"
+                    >
+                      Get a new code
+                    </button>
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm text-gray-600">
+                    Want to continue on another device?
+                  </span>
+                  <button
+                    onClick={handleGetTransferCode}
+                    disabled={transferLoading}
+                    className="shrink-0 text-sm px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                  >
+                    {transferLoading ? 'Getting code…' : 'Get a code'}
+                  </button>
+                </div>
+              )}
+              {transferError && (
+                <p className="mt-2 text-red-600 text-sm text-center">{transferError}</p>
+              )}
+            </div>
+          )}
 
           {/* CTA */}
           <p className="mt-6 text-center text-sm text-gray-400">

@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto'
 import { sql } from '@vercel/postgres'
 import type { PollData, Poll, Participant } from './types'
 
@@ -29,6 +30,14 @@ export async function initSchema() {
       participant_id INTEGER NOT NULL REFERENCES participants(id),
       date TEXT NOT NULL,
       UNIQUE(participant_id, date)
+    )
+  `
+  await sql`
+    CREATE TABLE IF NOT EXISTS transfer_codes (
+      code TEXT PRIMARY KEY,
+      poll_id TEXT NOT NULL REFERENCES polls(id),
+      participant_id INTEGER NOT NULL REFERENCES participants(id),
+      expires_at TIMESTAMPTZ NOT NULL
     )
   `
 }
@@ -90,6 +99,66 @@ export async function upsertParticipant(
     INSERT INTO participants (poll_id, name) VALUES (${pollId}, ${name}) RETURNING *
   `
   return result.rows[0]
+}
+
+// No ambiguous characters (0/O, 1/I/L) so codes are easy to read off a screen
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+const CODE_LENGTH = 6
+const CODE_TTL_MINUTES = 15
+
+export async function getParticipant(
+  pollId: string,
+  participantId: number
+): Promise<Participant | null> {
+  const result = await sql<Participant>`
+    SELECT * FROM participants WHERE id = ${participantId} AND poll_id = ${pollId}
+  `
+  return result.rows[0] ?? null
+}
+
+export async function createTransferCode(
+  pollId: string,
+  participantId: number
+): Promise<{ code: string; expiresAt: string }> {
+  await sql`DELETE FROM transfer_codes WHERE expires_at < NOW()`
+  // One active code per participant
+  await sql`DELETE FROM transfer_codes WHERE participant_id = ${participantId}`
+
+  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60_000).toISOString()
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = Array.from(
+      { length: CODE_LENGTH },
+      () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
+    ).join('')
+    try {
+      await sql`
+        INSERT INTO transfer_codes (code, poll_id, participant_id, expires_at)
+        VALUES (${code}, ${pollId}, ${participantId}, ${expiresAt})
+      `
+      return { code, expiresAt }
+    } catch {
+      // code collision — retry with a fresh one
+    }
+  }
+  throw new Error('Failed to generate transfer code')
+}
+
+export async function redeemTransferCode(
+  code: string
+): Promise<{ pollId: string; participantId: number; name: string } | null> {
+  const result = await sql<{ poll_id: string; participant_id: number }>`
+    DELETE FROM transfer_codes
+    WHERE code = ${code.toUpperCase()} AND expires_at > NOW()
+    RETURNING poll_id, participant_id
+  `
+  if (result.rows.length === 0) return null
+  const { poll_id, participant_id } = result.rows[0]
+
+  const participant = await sql<Participant>`
+    SELECT * FROM participants WHERE id = ${participant_id}
+  `
+  if (participant.rows.length === 0) return null
+  return { pollId: poll_id, participantId: participant_id, name: participant.rows[0].name }
 }
 
 export async function toggleAvailability(

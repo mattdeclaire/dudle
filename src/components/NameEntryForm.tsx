@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import RedeemCodeForm from './RedeemCodeForm'
 
 interface NameEntryFormProps {
   pollId: string
@@ -56,6 +57,17 @@ export default function NameEntryForm({ pollId, onSuccess }: NameEntryFormProps)
           {loading ? 'Joining…' : 'Join'}
         </button>
       </form>
+
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 border-t border-gray-200" />
+        <span className="text-xs text-gray-400 uppercase tracking-wide">or</span>
+        <div className="flex-1 border-t border-gray-200" />
+      </div>
+
+      <p className="text-gray-600 mb-3 text-center text-sm">
+        Have a code from another device?
+      </p>
+      <RedeemCodeForm pollId={pollId} onSuccess={onSuccess} />
     </div>
   )
 }

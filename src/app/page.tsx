@@ -1,4 +1,5 @@
 import CreatePollForm from '@/components/CreatePollForm'
+import RedeemCodeForm from '@/components/RedeemCodeForm'
 
 export default function HomePage() {
   return (
@@ -9,6 +10,12 @@ export default function HomePage() {
           <p className="text-gray-500">Find a date that works for everyone</p>
         </div>
         <CreatePollForm />
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-gray-500 text-sm mb-3 text-center">
+            Have a code from another device?
+          </p>
+          <RedeemCodeForm />
+        </div>
       </div>
     </div>
   )
