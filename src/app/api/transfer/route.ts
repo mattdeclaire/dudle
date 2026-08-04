@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { redeemTransferCode, initSchema } from '@/lib/db'
+import { lookupTransferCode, initSchema } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   await initSchema()
@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'code is required' }, { status: 400 })
   }
 
-  const result = await redeemTransferCode(code)
+  const result = await lookupTransferCode(code)
   if (!result) {
-    return NextResponse.json({ error: 'Invalid or expired code' }, { status: 404 })
+    return NextResponse.json({ error: 'Invalid code' }, { status: 404 })
   }
 
   return NextResponse.json(result)

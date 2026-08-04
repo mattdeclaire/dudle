@@ -21,6 +21,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
   const [transferCode, setTransferCode] = useState<string | null>(null)
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferError, setTransferError] = useState('')
+  const [personalCopied, setPersonalCopied] = useState(false)
   const [activeIds, setActiveIds] = useState<Set<number>>(
     () => new Set(initialData.participants.map((p) => p.id)),
   )
@@ -277,21 +278,37 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
               {transferCode ? (
                 <div className="text-center">
                   <p className="text-sm text-gray-600">
-                    On your other device, open this event and enter:
+                    On your other device, open this event and enter your code:
                   </p>
                   <p className="my-2 text-3xl font-mono font-bold tracking-[0.3em] text-gray-900">
                     {transferCode}
                   </p>
-                  <p className="text-xs text-gray-400">
-                    The code works once and expires in 15 minutes.
-                    {' '}
+                  <p className="text-sm text-gray-600 mb-2">or open your personal link there:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}/d/${pollId}/${transferCode}`}
+                      className="flex-1 text-sm text-gray-600 bg-white border border-gray-200 rounded px-2 py-1 outline-none min-w-0"
+                    />
                     <button
-                      onClick={handleGetTransferCode}
-                      disabled={transferLoading}
-                      className="text-indigo-500 hover:text-indigo-700 underline disabled:opacity-50"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            `${window.location.origin}/d/${pollId}/${transferCode}`,
+                          )
+                          setPersonalCopied(true)
+                          setTimeout(() => setPersonalCopied(false), 2000)
+                        } catch {}
+                      }}
+                      className="shrink-0 text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
                     >
-                      Get a new code
+                      {personalCopied ? 'Copied!' : 'Copy link'}
                     </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400">
+                    This code is yours permanently — anyone with it can act as you, so only
+                    share it with yourself.
                   </p>
                 </div>
               ) : (
@@ -304,7 +321,7 @@ export default function PollPageClient({ initialData }: PollPageClientProps) {
                     disabled={transferLoading}
                     className="shrink-0 text-sm px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
                   >
-                    {transferLoading ? 'Getting code…' : 'Get a code'}
+                    {transferLoading ? 'Getting code…' : 'Get your code'}
                   </button>
                 </div>
               )}

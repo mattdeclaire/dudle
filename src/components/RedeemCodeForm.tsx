@@ -49,8 +49,8 @@ export default function RedeemCodeForm({ pollId, onSuccess }: RedeemCodeFormProp
         type="text"
         value={code}
         onChange={(e) => setCode(e.target.value.toUpperCase())}
-        placeholder="e.g. XK4M2P"
-        maxLength={6}
+        placeholder="e.g. XK4M"
+        maxLength={4}
         autoCapitalize="characters"
         autoComplete="off"
         spellCheck={false}

@@ -36,10 +36,11 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS transfer_codes (
       code TEXT PRIMARY KEY,
       poll_id TEXT NOT NULL REFERENCES polls(id),
-      participant_id INTEGER NOT NULL REFERENCES participants(id),
-      expires_at TIMESTAMPTZ NOT NULL
+      participant_id INTEGER NOT NULL REFERENCES participants(id)
     )
   `
+  // Codes used to be short-lived; they are now permanent
+  await sql`ALTER TABLE transfer_codes DROP COLUMN IF EXISTS expires_at`
 }
 
 export async function createPoll(
@@ -103,8 +104,7 @@ export async function upsertParticipant(
 
 // No ambiguous characters (0/O, 1/I/L) so codes are easy to read off a screen
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-const CODE_LENGTH = 6
-const CODE_TTL_MINUTES = 15
+const CODE_LENGTH = 4
 
 export async function getParticipant(
   pollId: string,
@@ -116,26 +116,26 @@ export async function getParticipant(
   return result.rows[0] ?? null
 }
 
-export async function createTransferCode(
+export async function getOrCreateTransferCode(
   pollId: string,
   participantId: number
-): Promise<{ code: string; expiresAt: string }> {
-  await sql`DELETE FROM transfer_codes WHERE expires_at < NOW()`
-  // One active code per participant
-  await sql`DELETE FROM transfer_codes WHERE participant_id = ${participantId}`
+): Promise<string> {
+  const existing = await sql<{ code: string }>`
+    SELECT code FROM transfer_codes WHERE participant_id = ${participantId}
+  `
+  if (existing.rows.length > 0) return existing.rows[0].code
 
-  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60_000).toISOString()
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 10; attempt++) {
     const code = Array.from(
       { length: CODE_LENGTH },
       () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
     ).join('')
     try {
       await sql`
-        INSERT INTO transfer_codes (code, poll_id, participant_id, expires_at)
-        VALUES (${code}, ${pollId}, ${participantId}, ${expiresAt})
+        INSERT INTO transfer_codes (code, poll_id, participant_id)
+        VALUES (${code}, ${pollId}, ${participantId})
       `
-      return { code, expiresAt }
+      return code
     } catch {
       // code collision — retry with a fresh one
     }
@@ -143,22 +143,18 @@ export async function createTransferCode(
   throw new Error('Failed to generate transfer code')
 }
 
-export async function redeemTransferCode(
+export async function lookupTransferCode(
   code: string
 ): Promise<{ pollId: string; participantId: number; name: string } | null> {
-  const result = await sql<{ poll_id: string; participant_id: number }>`
-    DELETE FROM transfer_codes
-    WHERE code = ${code.toUpperCase()} AND expires_at > NOW()
-    RETURNING poll_id, participant_id
+  const result = await sql<{ poll_id: string; participant_id: number; name: string }>`
+    SELECT t.poll_id, t.participant_id, p.name
+    FROM transfer_codes t
+    JOIN participants p ON p.id = t.participant_id
+    WHERE t.code = ${code.toUpperCase()}
   `
   if (result.rows.length === 0) return null
-  const { poll_id, participant_id } = result.rows[0]
-
-  const participant = await sql<Participant>`
-    SELECT * FROM participants WHERE id = ${participant_id}
-  `
-  if (participant.rows.length === 0) return null
-  return { pollId: poll_id, participantId: participant_id, name: participant.rows[0].name }
+  const row = result.rows[0]
+  return { pollId: row.poll_id, participantId: row.participant_id, name: row.name }
 }
 
 export async function toggleAvailability(
