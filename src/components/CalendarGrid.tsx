@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import DateCell from './DateCell'
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -58,6 +59,7 @@ export default function CalendarGrid({
   myDates,
   onToggle,
 }: CalendarGridProps) {
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null)
   const months = getMonths(startDate, endDate)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -141,6 +143,9 @@ export default function CalendarGrid({
                     isPast={isPast}
                     names={dateToNames[dateStr] ?? []}
                     onToggle={() => onToggle(dateStr)}
+                    onHoverChange={(hovered) =>
+                      setHoveredDate((prev) => (hovered ? dateStr : prev === dateStr ? null : prev))
+                    }
                   />
                 )
               })}
@@ -149,6 +154,27 @@ export default function CalendarGrid({
         )
       })}
     </div>
+
+      {/* Names available on the hovered date; min-height reserves space so the page doesn't jump */}
+      <p className="mt-4 min-h-[1.25rem] text-sm text-center text-gray-600" aria-live="polite">
+        {hoveredDate && (
+          <>
+            <span className="font-semibold text-gray-700">
+              {new Date(hoveredDate + 'T00:00:00').toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              })}
+              :
+            </span>{' '}
+            {dateToNames[hoveredDate]?.length ? (
+              dateToNames[hoveredDate].join(', ')
+            ) : (
+              <span className="text-gray-400">No one yet</span>
+            )}
+          </>
+        )}
+      </p>
     </>
   )
 }

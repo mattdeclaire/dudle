@@ -11,6 +11,7 @@ interface DateCellProps {
   isPast: boolean
   names: string[]
   onToggle: () => void
+  onHoverChange: (hovered: boolean) => void
 }
 
 function getColor(count: number, max: number): { bg: string; text: string } | null {
@@ -33,6 +34,7 @@ export default function DateCell({
   isPast,
   names,
   onToggle,
+  onHoverChange,
 }: DateCellProps) {
   const color = getColor(count, maxCount)
   const [popover, setPopover] = useState<{ x: number; y: number } | null>(null)
@@ -77,6 +79,8 @@ export default function DateCell({
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
         disabled={isPast}
         className={[
           'relative flex items-center justify-center w-full aspect-square',
