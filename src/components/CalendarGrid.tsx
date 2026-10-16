@@ -4,6 +4,7 @@ import { useState } from 'react'
 import DateCell from './DateCell'
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -48,6 +49,15 @@ function toDateString(year: number, month: number, day: number): string {
   const mm = String(month + 1).padStart(2, '0')
   const dd = String(day).padStart(2, '0')
   return `${year}-${mm}-${dd}`
+}
+
+// e.g. "Wed. Nov. 18" — no period after month names that aren't abbreviated (May, June, July)
+function formatCaptionDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  const weekday = DAY_NAMES[d.getDay()].slice(0, 3)
+  const monthName = MONTH_NAMES[d.getMonth()]
+  const month = monthName.length <= 4 ? monthName : `${monthName.slice(0, 3)}.`
+  return `${weekday}. ${month} ${d.getDate()}`
 }
 
 export default function CalendarGrid({
@@ -159,16 +169,9 @@ export default function CalendarGrid({
       <p className="mt-4 min-h-[1.25rem] text-sm text-center text-gray-600" aria-live="polite">
         {hoveredDate && (
           <>
-            <span className="font-semibold text-gray-700">
-              {new Date(hoveredDate + 'T00:00:00').toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-              :
-            </span>{' '}
+            <span className="font-semibold text-gray-700">{formatCaptionDate(hoveredDate)}:</span>{' '}
             {dateToNames[hoveredDate]?.length ? (
-              dateToNames[hoveredDate].join(', ')
+              `(${dateToNames[hoveredDate].length}) ${dateToNames[hoveredDate].join(', ')}`
             ) : (
               <span className="text-gray-400">No one yet</span>
             )}
